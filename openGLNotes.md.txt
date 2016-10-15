@@ -1,0 +1,116 @@
+## Graphics
+
+#### Library: libgs.h, libgpu.h, libgte.h
+
+Basic code stubs to deal with graphics
+```
+GLFWwindow *window = NULL;
+initValue = glfwInit();
+
+if(initValue == GL_FALSE)
+{
+	fprintf(stderr, "Failed to initialize GLFW.\n");
+    exit(EXIT_FAILURE);
+}
+
+window = glfwCreateWindow(WIDTH, HEIGHT, WINDOW_NAME, MONITOR, SHARE)
+//Specify monitor for fullscreen, or null for windowed. Share allows context to share resources with other windows.
+
+if(window == NULL) 
+{
+	fprintf(stderr, "Failed to create window\n");
+    glfwDestroyWindow(window);
+    glfwTerminate();  //Call whenever we're exiting/cleaning up.
+    exit(EXIT_FAILURE);
+}
+
+glfwMakeContextCurrent(window);  //Sets the OpenGL context, Must be set to use the OpenGL Api.
+//Context will remain current until another context is made current, or the window is destroyed.
+
+//Functions for updating display
+glfwSwapInterval(1); //Number of screen updates to wait before buffers are swapped. (One monitor refresh cycle, typical 60hz).
+
+if(glewInit() != GLEW_OK) //
+  {
+    glfwTerminate();
+    exit(EXIT_FAILURE);
+  }
+```
+
+#### To setup graphics:
+
+* Initialize a GLFW instance using glfwInit().
+* Create a window using glfwCreateWindow(width, height, name, monitor, share).
+* Check to see if the window was created correctly, else destroy it and terminate.
+* Set current OpenGL context with glfwMakeContextCurrent(window); 
+* Set the swap interval with glfwSwapInterval(1);
+* Initialize GLEW with glewInit(), if it was not initialized correctly, clean up and exit.
+* Set drawing area to one similar to the playstation with glOrtho(0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f, 0.0f, -1.0f);
+
+#### To update the display:
+
+```
+while (!glfwWindowShouldClose(window)) // Loops while the glfw window is open.
+    {
+        //Draw things.
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+```
+
+### Drawing with the GPU
+##### Verticies
+
+* Set vertices you wish to draw in a single array in clockwise order.
+```
+float verticies[] = {
+    0.0f,  0.5f, //Vertex 1 (X, Y)
+     0.5f, -0.5f, //Vertex 2 (X, Y)
+    -0.5f, -0.5f  //Vertex 3 (X, Y)
+};
+```
+
+* Create a vertex buffer object to store the vertex data in vram.
+```
+GLuint vbo;
+glGenBuffers(1, &vbo); //(numberofbuffers, bufferhandle)
+```
+Bufferhandle is not a pointer, it's an unsigned integer that is used to reference your buffer.
+* Set the buffer's active type with [glBindBuffer(type, vbo);](http://docs.gl/gl4/glBindBuffer)
+```
+glBindBuffer(GL_ARRAY_BUFFER, vbo);
+```
+* Copy the vertex data into the array buffer we just made.
+```
+
+glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+```
+Last parameter determines where the data is stored in memory, and the anticipated usage pattern associated with it.
+
+GL_STATIC_DRAW: The vertex data will be uploaded once and drawn many times (e.g. the world).
+GL_DYNAMIC_DRAW: The vertex data will be changed from time to time, but drawn many times more than that.
+GL_STREAM_DRAW: The vertex data will change almost every time it's drawn (e.g. user interface).
+
+* Draw the activated array buffers.
+```
+glDrawArrays(GL_TRIANGLES, 0, 3);
+```
+Draws all activated buffers of "GL_ARRAY_BUFFER" type.
+
+First parameter specifies the type of primitive to draw (usually point, line, or triangle).
+Second parameter determines how many verticies to skip at the beginning, and last parameter determines the number of verticies to process.
+
+##### Shaders: todo
+
+##### Textures
+
+* Create a texture buffer object,
+* Bind the texture buffer object to "activate" it.
+```
+GLuint texture;
+glGenTextures(1, &texture);
+glBindTexture(GL_TEXTURE_2D, texture);
+```
+###### Texture Coordinates
+Textures are addressed using "Texture Coordinates" from (0,0) to (1,1).
+(0,0) is bottom left, (1,1) is top right.
