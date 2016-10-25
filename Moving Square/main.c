@@ -185,8 +185,6 @@ void *initGraphics()
 
 void initInput(void *window)
 {
-	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode((GLFWwindow *)window, GLFW_STICKY_KEYS, GL_TRUE);
 	if (window != NULL)
 	{
 		glfwSetKeyCallback((GLFWwindow *)window, inputCallback);
