@@ -27,7 +27,7 @@ struct s_polyF4 {
 };
 
 //to help translate input into a common type
-enum inputTypes { UP, DOWN, LEFT, RIGHT, CHANGE_COLOR, NONE };
+enum inputTypes { UP, DOWN, LEFT, RIGHT, UPLEFT, UPRIGHT, DOWNLEFT, DOWNRIGHT, CHANGE_COLOR, NONE };
 enum inputTypes g_decodedInput = NONE;
 
 //prototypes
@@ -48,7 +48,7 @@ int displayLive(void *window);
 //callback to decode input
 static void inputCallback(GLFWwindow *window, int key, int scanCode, int action, int mods);
 
-int main( void )
+int main(void)
 {
 	void *window = initGraphics();
 
@@ -68,16 +68,16 @@ int main( void )
 	glGenBuffers(1, &vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-	
+
 
 	// Writing shaders in file for example, should be loaded from a separate file.
 	// Create and compile the vertex shader
 	const char* vertexSource = GLSL(
 		in vec2 position;
 
-		void main() {
-			gl_Position = vec4(position, 0.0, 1.0);
-		}
+	void main() {
+		gl_Position = vec4(position, 0.0, 1.0);
+	}
 	);
 
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -87,9 +87,9 @@ int main( void )
 	const char* fragmentSource = GLSL(
 		out vec4 color;
 
-		void main() {
-			color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
-		}
+	void main() {
+		color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	}
 	);
 
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -110,7 +110,7 @@ int main( void )
 	glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
 
-	while(displayLive(window)) // Check if the window was closed
+	while (displayLive(window)) // Check if the window was closed
 	{
 		// Check to see if we need to move the primitive
 		movePrimitive(&polyF4, getInput());
@@ -195,9 +195,9 @@ struct s_polyF4 genPrimitive()
 {
 	struct s_polyF4 temp;
 
-	#ifdef psx
+#ifdef psx
 	SetPolyF4((POLY_F4 *)&temp);
-	#endif
+#endif
 
 	temp.r0 = 0;
 	temp.g0 = 0;
@@ -232,9 +232,8 @@ enum inputTypes getInput()
 
 void movePrimitive(struct s_polyF4 *f4, enum inputTypes decodedInput)
 {
-	switch (decodedInput)
+	if ((decodedInput == UP) || (decodedInput == UPLEFT) || (decodedInput == UPRIGHT))
 	{
-	case UP:
 		f4->y0 = f4->y0 + .01f;
 		f4->y1 = f4->y1 + .01f;
 		f4->y2 = f4->y2 + .01f;
@@ -246,8 +245,10 @@ void movePrimitive(struct s_polyF4 *f4, enum inputTypes decodedInput)
 			f4->y2 = -2.0f;
 			f4->y3 = -1.0f;
 		}
-		break;
-	case DOWN:
+	}
+
+	if ((decodedInput == DOWN) || (decodedInput == DOWNLEFT) || (decodedInput == DOWNRIGHT))
+	{
 		f4->y0 = f4->y0 - .01f;
 		f4->y1 = f4->y1 - .01f;
 		f4->y2 = f4->y2 - .01f;
@@ -259,8 +260,10 @@ void movePrimitive(struct s_polyF4 *f4, enum inputTypes decodedInput)
 			f4->y2 = 1.0f;
 			f4->y3 = 2.0f;
 		}
-		break;
-	case LEFT:
+	}
+
+	if ((decodedInput == LEFT) || (decodedInput == UPLEFT) || (decodedInput == DOWNLEFT))
+	{
 		f4->x0 = f4->x0 - .01f;
 		f4->x1 = f4->x1 - .01f;
 		f4->x2 = f4->x2 - .01f;
@@ -272,8 +275,10 @@ void movePrimitive(struct s_polyF4 *f4, enum inputTypes decodedInput)
 			f4->x2 = 2.0f;
 			f4->x3 = 2.0f;
 		}
-		break;
-	case RIGHT:
+	}
+
+	if ((decodedInput == RIGHT) || (decodedInput == UPRIGHT) || (decodedInput == DOWNRIGHT))
+	{
 		f4->x0 = f4->x0 + .01f;
 		f4->x1 = f4->x1 + .01f;
 		f4->x2 = f4->x2 + .01f;
@@ -285,8 +290,9 @@ void movePrimitive(struct s_polyF4 *f4, enum inputTypes decodedInput)
 			f4->x2 = -1.0f;
 			f4->x3 = -1.0f;
 		}
-		break;
-	case CHANGE_COLOR:
+	}
+	if (decodedInput == CHANGE_COLOR)
+	{
 		//check if it has been greater than 1 second since glfw time has been reset
 		if (glfwGetTime() > 1.0f)
 		{
@@ -295,11 +301,8 @@ void movePrimitive(struct s_polyF4 *f4, enum inputTypes decodedInput)
 			f4->g0 = rand() % 256;
 			f4->b0 = rand() % 256;
 		}
-		break;
-	default:
-		break;
-		}
 	}
+}
 
 void display(void *window, struct s_polyF4 *f4)
 {
@@ -338,16 +341,65 @@ static void inputCallback(GLFWwindow *window, int key, int scanCode, int action,
 		switch (key)
 		{
 		case GLFW_KEY_UP:
-			g_decodedInput = UP;
+			printf("UP");
+			if (glfwGetKey(window, GLFW_KEY_LEFT))
+			{
+				g_decodedInput = UPLEFT;
+				printf("UpLeft");
+			}
+			else if (glfwGetKey(window, GLFW_KEY_RIGHT))
+			{
+				g_decodedInput = UPRIGHT;
+			}
+			else
+			{
+				g_decodedInput = UP;
+			}
 			break;
 		case GLFW_KEY_DOWN:
-			g_decodedInput = DOWN;
+
+			if (glfwGetKey(window, GLFW_KEY_LEFT))
+			{
+				g_decodedInput = DOWNLEFT;
+			}
+			else if (glfwGetKey(window, GLFW_KEY_RIGHT))
+			{
+				g_decodedInput = DOWNRIGHT;
+			}
+			else
+			{
+				g_decodedInput = DOWN;
+			}
 			break;
 		case GLFW_KEY_LEFT:
-			g_decodedInput = LEFT;
+
+			if (glfwGetKey(window, GLFW_KEY_UP))
+			{
+				g_decodedInput = UPLEFT;
+			}
+			else if (glfwGetKey(window, GLFW_KEY_DOWN))
+			{
+				g_decodedInput = DOWNLEFT;
+			}
+			else
+			{
+				g_decodedInput = LEFT;
+			}
 			break;
 		case GLFW_KEY_RIGHT:
-			g_decodedInput = RIGHT;
+
+			if (glfwGetKey(window, GLFW_KEY_UP))
+			{
+				g_decodedInput = UPRIGHT;
+			}
+			else if (glfwGetKey(window, GLFW_KEY_DOWN))
+			{
+				g_decodedInput = DOWNRIGHT;
+			}
+			else
+			{
+				g_decodedInput = RIGHT;
+			}
 			break;
 		case GLFW_KEY_X:
 			g_decodedInput = CHANGE_COLOR;
